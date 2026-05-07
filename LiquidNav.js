@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions, Animated, PanResponder, Platform } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Inject global web styles for tap highlight if on web
+if (Platform.OS === 'web') {
+  const style = document.createElement('style');
+  style.textContent = `
+    * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
+  `;
+  document.head.append(style);
+}
 
 /**
  * LiquidNav Component
@@ -21,20 +30,17 @@ const LiquidNav = ({
   const [currentPage, setCurrentPage] = useState(tabs[0].id);
   const currentIdx = tabs.findIndex(t => t.id === currentPage);
   
-  // Refs for persistent state in PanResponder
   const currentIdxRef = useRef(currentIdx);
-  const scrollX = useRef(new Animated.Value(currentIdx * 0)).current; // Initial placeholder
+  const scrollX = useRef(new Animated.Value(currentIdx * 0)).current;
   const pillWidth = useRef(new Animated.Value(56)).current;
   const pillScale = useRef(new Animated.Value(1)).current;
 
-  // Layout Constants
   const NAV_MAX_WIDTH = 420;
   const NAV_HORIZONTAL_PADDING = 20;
   const ACTUAL_NAV_WIDTH = Math.min(SCREEN_WIDTH - (NAV_HORIZONTAL_PADDING * 2), NAV_MAX_WIDTH);
   const TAB_AREA_WIDTH = ACTUAL_NAV_WIDTH - 20;
   const TAB_WIDTH = TAB_AREA_WIDTH / tabs.length;
 
-  // Sync scrollX and Ref on state change
   useEffect(() => {
     currentIdxRef.current = currentIdx;
     Animated.spring(scrollX, {
@@ -88,7 +94,6 @@ const LiquidNav = ({
   return (
     <View style={styles.navContainer}>
       <View style={[styles.navBar, { width: ACTUAL_NAV_WIDTH }]} {...panResponder.panHandlers}>
-        {/* Liquid Morphing Pill */}
         <Animated.View 
           style={[
             styles.pillContainer, 
