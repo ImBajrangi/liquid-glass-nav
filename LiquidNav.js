@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -19,7 +19,11 @@ const LiquidNav = ({
   onTabChange 
 }) => {
   const [currentPage, setCurrentPage] = useState(tabs[0].id);
-  const scrollX = useRef(new Animated.Value(0)).current;
+  const currentIdx = tabs.findIndex(t => t.id === currentPage);
+  
+  // Refs for persistent state in PanResponder
+  const currentIdxRef = useRef(currentIdx);
+  const scrollX = useRef(new Animated.Value(currentIdx * 0)).current; // Initial placeholder
   const pillWidth = useRef(new Animated.Value(56)).current;
   const pillScale = useRef(new Animated.Value(1)).current;
 
@@ -30,43 +34,60 @@ const LiquidNav = ({
   const TAB_AREA_WIDTH = ACTUAL_NAV_WIDTH - 20;
   const TAB_WIDTH = TAB_AREA_WIDTH / tabs.length;
 
-  const handlePressIn = () => {
-    Animated.spring(pillScale, { toValue: 1.15, useNativeDriver: false, friction: 5 }).start();
-  };
+  // Sync scrollX and Ref on state change
+  useEffect(() => {
+    currentIdxRef.current = currentIdx;
+    Animated.spring(scrollX, {
+      toValue: currentIdx * TAB_WIDTH,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 100,
+    }).start();
+  }, [currentIdx]);
 
-  const handlePressOut = () => {
-    Animated.spring(pillScale, { toValue: 1, useNativeDriver: false, friction: 5 }).start();
-  };
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 5,
+      onPanResponderGrant: () => {
+        Animated.spring(pillScale, { toValue: 1.15, useNativeDriver: false, friction: 5 }).start();
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        const startX = currentIdxRef.current * TAB_WIDTH;
+        const newX = startX + gestureState.dx;
+        const clampedX = Math.max(0, Math.min(newX, TAB_AREA_WIDTH - TAB_WIDTH));
+        scrollX.setValue(clampedX);
 
-  const handleTabPress = (id, index) => {
-    Animated.parallel([
-      Animated.spring(scrollX, {
-        toValue: index * TAB_WIDTH,
-        useNativeDriver: false,
-        friction: 8,
-        tension: 80,
-      }),
-      Animated.sequence([
-        Animated.timing(pillWidth, {
-          toValue: 80,
-          duration: 150,
-          useNativeDriver: false,
-        }),
-        Animated.spring(pillWidth, {
-          toValue: 56,
-          useNativeDriver: false,
-          friction: 6,
-        }),
-      ]),
-    ]).start();
-    
-    setCurrentPage(id);
-    if (onTabChange) onTabChange(id);
-  };
+        const stretch = 56 + Math.min(Math.abs(gestureState.dx) * 0.2, 34);
+        pillWidth.setValue(stretch);
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        const startX = currentIdxRef.current * TAB_WIDTH;
+        const finalX = startX + gestureState.dx;
+        const nearestIndex = Math.round(Math.max(0, Math.min(finalX, TAB_AREA_WIDTH - TAB_WIDTH)) / TAB_WIDTH);
+        
+        Animated.parallel([
+          Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 6 }),
+          Animated.spring(pillScale, { toValue: 1, useNativeDriver: false, friction: 6 }),
+        ]).start();
+
+        if (tabs[nearestIndex].id !== currentPage) {
+          setCurrentPage(tabs[nearestIndex].id);
+          if (onTabChange) onTabChange(tabs[nearestIndex].id);
+        } else {
+          Animated.spring(scrollX, {
+            toValue: currentIdxRef.current * TAB_WIDTH,
+            useNativeDriver: false,
+            friction: 8,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   return (
     <View style={styles.navContainer}>
-      <View style={[styles.navBar, { width: ACTUAL_NAV_WIDTH }]}>
+      <View style={[styles.navBar, { width: ACTUAL_NAV_WIDTH }]} {...panResponder.panHandlers}>
         {/* Liquid Morphing Pill */}
         <Animated.View 
           style={[
@@ -95,9 +116,10 @@ const LiquidNav = ({
           return (
             <TouchableOpacity 
               key={tab.id}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              onPress={() => handleTabPress(tab.id, index)} 
+              onPress={() => {
+                setCurrentPage(tab.id);
+                if (onTabChange) onTabChange(tab.id);
+              }} 
               style={[styles.navItem, { width: TAB_WIDTH }]}
               activeOpacity={1}
             >
