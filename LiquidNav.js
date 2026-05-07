@@ -56,8 +56,8 @@ const LiquidNav = ({
 
   const handlePressIn = () => {
     Animated.parallel([
-      Animated.spring(pillScaleX, { toValue: 1.12, useNativeDriver: false, friction: 7 }),
-      Animated.spring(pillScaleY, { toValue: 1.06, useNativeDriver: false, friction: 7 }),
+      Animated.spring(pillScaleX, { toValue: 1.06, useNativeDriver: false, friction: 8 }),
+      Animated.spring(pillScaleY, { toValue: 1.04, useNativeDriver: false, friction: 8 }),
     ]).start();
   };
 
