@@ -1,0 +1,1 @@
+{\n  "name": "liquid-glass-nav",\n  "version": "1.0.0",\n  "description": "Premium liquid morphing navigation for React Native",\n  "main": "LiquidNav.js",\n  "dependencies": {\n    "lucide-react-native": "*"\n  }\n}
