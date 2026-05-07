@@ -11,8 +11,8 @@ if (Platform.OS === 'web') {
 }
 
 /**
- * LiquidNav Component (Jelly Glass Edition)
- * Features Squash & Stretch physics for a premium fluid feel.
+ * LiquidNav Component (Refined Liquid Edition)
+ * Subtler Squash & Stretch for a more stable, premium feel.
  */
 const LiquidNav = ({ 
   tabs, 
@@ -38,17 +38,17 @@ const LiquidNav = ({
       Animated.spring(scrollX, {
         toValue: index * TAB_WIDTH,
         useNativeDriver: false,
-        friction: 8,
-        tension: 80,
+        friction: 9,
+        tension: 70,
       }),
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(pillWidth, { toValue: 100, duration: 150, useNativeDriver: false }),
-          Animated.timing(pillScaleY, { toValue: 0.75, duration: 150, useNativeDriver: false }),
+          Animated.timing(pillWidth, { toValue: 80, duration: 160, useNativeDriver: false }),
+          Animated.timing(pillScaleY, { toValue: 0.9, duration: 160, useNativeDriver: false }),
         ]),
         Animated.parallel([
-          Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 5, tension: 40 }),
-          Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 4, tension: 100 }),
+          Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 8, tension: 50 }),
+          Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 8, tension: 80 }),
         ]),
       ]),
     ]).start();
@@ -56,15 +56,15 @@ const LiquidNav = ({
 
   const handlePressIn = () => {
     Animated.parallel([
-      Animated.spring(pillScaleX, { toValue: 1.2, useNativeDriver: false, friction: 4 }),
-      Animated.spring(pillScaleY, { toValue: 1.1, useNativeDriver: false, friction: 4 }),
+      Animated.spring(pillScaleX, { toValue: 1.12, useNativeDriver: false, friction: 7 }),
+      Animated.spring(pillScaleY, { toValue: 1.06, useNativeDriver: false, friction: 7 }),
     ]).start();
   };
 
   const handlePressOut = () => {
     Animated.parallel([
-      Animated.spring(pillScaleX, { toValue: 1, useNativeDriver: false, friction: 5 }),
-      Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 5 }),
+      Animated.spring(pillScaleX, { toValue: 1, useNativeDriver: false, friction: 8 }),
+      Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 8 }),
     ]).start();
   };
 
