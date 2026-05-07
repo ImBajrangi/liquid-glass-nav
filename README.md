@@ -1,0 +1,1 @@
+# Liquid Glass Navigation (React Native)\n\nA high-fidelity, liquid-morphing navigation bar component for React Native.\n\n## Features\n- Liquid morphing indicator\n- Touch-reactive bulge effect\n- Spring physics navigation\n- Glassmorphism design
