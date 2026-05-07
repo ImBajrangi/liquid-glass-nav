@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Animated, PanResponder, Platform } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -11,11 +11,13 @@ if (Platform.OS === 'web') {
 }
 
 /**
- * LiquidNav Component (Master Jelly Edition)
- * Combines Gestural Dragging with Press-Hold Bulge reactivity.
+ * LiquidNav Component (Configurable Edition)
+ * @param {Array} tabs - Array of { id, icon: LucideIcon }
+ * @param {String} mode - 'drag' or 'press-hold' (Mutually Exclusive)
  */
 const LiquidNav = ({ 
   tabs, 
+  mode = 'drag', 
   activeColor = '#55624d', 
   inactiveColor = '#94a3b8', 
   pillColor = '#e2e8f0',
@@ -43,14 +45,16 @@ const LiquidNav = ({
     }).start();
   }, [currentIdx]);
 
-  const handlePressIn = () => {
+  const triggerBulgeIn = () => {
+    if (mode !== 'press-hold') return;
     Animated.parallel([
-      Animated.spring(pillScaleX, { toValue: 1.08, useNativeDriver: false, friction: 8 }),
-      Animated.spring(pillScaleY, { toValue: 1.04, useNativeDriver: false, friction: 8 }),
+      Animated.spring(pillScaleX, { toValue: 1.12, useNativeDriver: false, friction: 8 }),
+      Animated.spring(pillScaleY, { toValue: 1.06, useNativeDriver: false, friction: 8 }),
     ]).start();
   };
 
-  const handlePressOut = () => {
+  const triggerBulgeOut = () => {
+    if (mode !== 'press-hold') return;
     Animated.parallel([
       Animated.spring(pillScaleX, { toValue: 1, useNativeDriver: false, friction: 8 }),
       Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 8 }),
@@ -59,27 +63,28 @@ const LiquidNav = ({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 5,
-      onPanResponderGrant: () => handlePressIn(),
+      onStartShouldSetPanResponder: () => mode === 'drag',
+      onMoveShouldSetPanResponder: (evt, gestureState) => mode === 'drag' && Math.abs(gestureState.dx) > 5,
       onPanResponderMove: (evt, gestureState) => {
+        if (mode !== 'drag') return;
         const startX = currentIdxRef.current * TAB_WIDTH;
         const newX = startX + gestureState.dx;
         const clampedX = Math.max(0, Math.min(newX, (tabs.length - 1) * TAB_WIDTH));
         scrollX.setValue(clampedX);
 
-        const stretch = 56 + Math.min(Math.abs(gestureState.dx) * 0.15, 24);
+        const stretch = 56 + Math.min(Math.abs(gestureState.dx) * 0.2, 34);
         pillWidth.setValue(stretch);
-        pillScaleY.setValue(0.95);
+        pillScaleY.setValue(0.9);
       },
       onPanResponderRelease: (evt, gestureState) => {
-        handlePressOut();
+        if (mode !== 'drag') return;
         const startX = currentIdxRef.current * TAB_WIDTH;
         const finalX = startX + gestureState.dx;
         const nearestIndex = Math.round(Math.max(0, Math.min(finalX, (tabs.length - 1) * TAB_WIDTH)) / TAB_WIDTH);
         
         Animated.parallel([
           Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 6 }),
+          Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 6 }),
         ]).start();
 
         if (tabs[nearestIndex].id !== currentPage) {
@@ -118,9 +123,14 @@ const LiquidNav = ({
           return (
             <TouchableOpacity 
               key={tab.id}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              onPress={() => setCurrentPage(tab.id)} 
+              onPressIn={triggerBulgeIn}
+              onPressOut={triggerBulgeOut}
+              onPress={() => {
+                if (mode === 'press-hold' || !isActive) {
+                  setCurrentPage(tab.id);
+                  if (onTabChange) onTabChange(tab.id);
+                }
+              }} 
               style={styles.tab}
               activeOpacity={1}
             >
