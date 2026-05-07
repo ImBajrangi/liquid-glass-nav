@@ -51,12 +51,20 @@ const LiquidNav = ({
     }).start();
   }, [currentIdx]);
 
+  const handlePressIn = () => {
+    Animated.spring(pillScale, { toValue: 1.15, useNativeDriver: false, friction: 5 }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(pillScale, { toValue: 1, useNativeDriver: false, friction: 5 }).start();
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 5,
       onPanResponderGrant: () => {
-        Animated.spring(pillScale, { toValue: 1.15, useNativeDriver: false, friction: 5 }).start();
+        handlePressIn();
       },
       onPanResponderMove: (evt, gestureState) => {
         const startX = currentIdxRef.current * TAB_WIDTH;
@@ -68,13 +76,13 @@ const LiquidNav = ({
         pillWidth.setValue(stretch);
       },
       onPanResponderRelease: (evt, gestureState) => {
+        handlePressOut();
         const startX = currentIdxRef.current * TAB_WIDTH;
         const finalX = startX + gestureState.dx;
         const nearestIndex = Math.round(Math.max(0, Math.min(finalX, TAB_AREA_WIDTH - TAB_WIDTH)) / TAB_WIDTH);
         
         Animated.parallel([
           Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 6 }),
-          Animated.spring(pillScale, { toValue: 1, useNativeDriver: false, friction: 6 }),
         ]).start();
 
         if (tabs[nearestIndex].id !== currentPage) {
@@ -121,6 +129,8 @@ const LiquidNav = ({
           return (
             <TouchableOpacity 
               key={tab.id}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
               onPress={() => {
                 setCurrentPage(tab.id);
                 if (onTabChange) onTabChange(tab.id);
