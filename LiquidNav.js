@@ -11,7 +11,8 @@ if (Platform.OS === 'web') {
 }
 
 /**
- * LiquidNav Component (Simplified Fluid Version)
+ * LiquidNav Component (Jelly Glass Edition)
+ * Features Squash & Stretch physics for a premium fluid feel.
  */
 const LiquidNav = ({ 
   tabs, 
@@ -23,7 +24,8 @@ const LiquidNav = ({
   const [currentPage, setCurrentPage] = useState(tabs[0].id);
   const scrollX = useRef(new Animated.Value(0)).current;
   const pillWidth = useRef(new Animated.Value(56)).current;
-  const pillScale = useRef(new Animated.Value(1)).current;
+  const pillScaleX = useRef(new Animated.Value(1)).current;
+  const pillScaleY = useRef(new Animated.Value(1)).current;
 
   const NAV_WIDTH = Math.min(SCREEN_WIDTH - 40, 400);
   const TAB_WIDTH = (NAV_WIDTH - 20) / tabs.length;
@@ -36,29 +38,53 @@ const LiquidNav = ({
       Animated.spring(scrollX, {
         toValue: index * TAB_WIDTH,
         useNativeDriver: false,
-        bounciness: 8,
-        speed: 12,
+        friction: 8,
+        tension: 80,
       }),
       Animated.sequence([
-        Animated.timing(pillWidth, { toValue: 80, duration: 150, useNativeDriver: false }),
-        Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, bounciness: 10 }),
+        Animated.parallel([
+          Animated.timing(pillWidth, { toValue: 100, duration: 150, useNativeDriver: false }),
+          Animated.timing(pillScaleY, { toValue: 0.75, duration: 150, useNativeDriver: false }),
+        ]),
+        Animated.parallel([
+          Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 5, tension: 40 }),
+          Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 4, tension: 100 }),
+        ]),
       ]),
     ]).start();
   };
 
   const handlePressIn = () => {
-    Animated.spring(pillScale, { toValue: 1.15, useNativeDriver: false, bounciness: 20 }).start();
+    Animated.parallel([
+      Animated.spring(pillScaleX, { toValue: 1.2, useNativeDriver: false, friction: 4 }),
+      Animated.spring(pillScaleY, { toValue: 1.1, useNativeDriver: false, friction: 4 }),
+    ]).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(pillScale, { toValue: 1, useNativeDriver: false, bounciness: 20 }).start();
+    Animated.parallel([
+      Animated.spring(pillScaleX, { toValue: 1, useNativeDriver: false, friction: 5 }),
+      Animated.spring(pillScaleY, { toValue: 1, useNativeDriver: false, friction: 5 }),
+    ]).start();
   };
 
   return (
     <View style={styles.navWrapper}>
       <View style={[styles.navBar, { width: NAV_WIDTH }]}>
         <Animated.View style={[styles.bubbleContainer, { width: TAB_WIDTH, transform: [{ translateX: scrollX }] }]}>
-          <Animated.View style={[styles.bubble, { backgroundColor: pillColor, width: pillWidth, transform: [{ scale: pillScale }] }]} />
+          <Animated.View 
+            style={[
+              styles.bubble, 
+              { 
+                backgroundColor: pillColor, 
+                width: pillWidth, 
+                transform: [
+                  { scaleX: pillScaleX },
+                  { scaleY: pillScaleY }
+                ] 
+              }
+            ]} 
+          />
         </Animated.View>
         
         {tabs.map((tab, index) => {
