@@ -41,14 +41,27 @@ const LiquidNav = ({
   const TAB_AREA_WIDTH = ACTUAL_NAV_WIDTH - 20;
   const TAB_WIDTH = TAB_AREA_WIDTH / tabs.length;
 
+  // Unified Liquid Animation Sequence
+  const triggerLiquidFlow = (toIndex) => {
+    Animated.parallel([
+      Animated.spring(scrollX, {
+        toValue: toIndex * TAB_WIDTH,
+        useNativeDriver: false,
+        friction: 8,
+        tension: 100,
+      }),
+      Animated.sequence([
+        Animated.timing(pillWidth, { toValue: 80, duration: 150, useNativeDriver: false }),
+        Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 6 }),
+      ]),
+    ]).start();
+  };
+
   useEffect(() => {
-    currentIdxRef.current = currentIdx;
-    Animated.spring(scrollX, {
-      toValue: currentIdx * TAB_WIDTH,
-      useNativeDriver: false,
-      friction: 8,
-      tension: 100,
-    }).start();
+    if (currentIdxRef.current !== currentIdx) {
+      triggerLiquidFlow(currentIdx);
+      currentIdxRef.current = currentIdx;
+    }
   }, [currentIdx]);
 
   const handlePressIn = () => {
@@ -81,19 +94,14 @@ const LiquidNav = ({
         const finalX = startX + gestureState.dx;
         const nearestIndex = Math.round(Math.max(0, Math.min(finalX, TAB_AREA_WIDTH - TAB_WIDTH)) / TAB_WIDTH);
         
-        Animated.parallel([
-          Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 6 }),
-        ]).start();
-
         if (tabs[nearestIndex].id !== currentPage) {
           setCurrentPage(tabs[nearestIndex].id);
           if (onTabChange) onTabChange(tabs[nearestIndex].id);
         } else {
-          Animated.spring(scrollX, {
-            toValue: currentIdxRef.current * TAB_WIDTH,
-            useNativeDriver: false,
-            friction: 8,
-          }).start();
+          Animated.parallel([
+            Animated.spring(scrollX, { toValue: currentIdxRef.current * TAB_WIDTH, useNativeDriver: false, friction: 8 }),
+            Animated.spring(pillWidth, { toValue: 56, useNativeDriver: false, friction: 6 }),
+          ]).start();
         }
       },
     })
